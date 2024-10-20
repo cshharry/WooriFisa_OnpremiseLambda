@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Voting App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+
+        .buttons {
+            margin-bottom: 20px;
+        }
+
+        .buttons button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .buttons button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        #results {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Vote for Your Favorite Candidate!</h1>
+    </header>
+
+    <div class="container">
+        <div class="buttons">
+            <button onclick="vote('Alice')">Vote for Alice</button>
+            <button onclick="vote('Bob')">Vote for Bob</button>
+        </div>
+
+        <h2>Live Results</h2>
+        <table id="results-table">
+            <thead>
+                <tr>
+                    <th>Candidate</th>
+                    <th>Votes</th>
+                </tr>
+            </thead>
+            <tbody id="results-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiUrl = 'wss://ls6t58mdq6.execute-api.ap-northeast-2.amazonaws.com/production';
+        const socket = new WebSocket(apiUrl);
+
+        socket.onopen = () => {
+            console.log('Connected to WebSocket');
+        };
+
+        socket.onmessage = (event) => {
+            const results = JSON.parse(event.data);
+            updateResultsTable(results);
+        };
+
+        socket.onclose = () => {
+            console.log('Disconnected from WebSocket');
+        };
+
+        function vote(candidate) {
+            const message = JSON.stringify({ action: 'vote', candidate });
+            socket.send(message);
+        }
+
+        function updateResultsTable(results) {
+            const resultsBody = document.getElementById('results-body');
+            resultsBody.innerHTML = '';  // 기존 내용을 초기화
+
+            results.forEach(result => {
+                const row = document.createElement('tr');
+                const candidateCell = document.createElement('td');
+                const votesCell = document.createElement('td');
+
+                candidateCell.textContent = result.candidate;
+                votesCell.textContent = result.votes;
+
+                row.appendChild(candidateCell);
+                row.appendChild(votesCell);
+                resultsBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>
